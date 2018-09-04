@@ -19,10 +19,16 @@ class Transport implements NetworkTransport\TransportInterface
      */
     protected $port;
 
-    public function __construct(string $host, int $port)
+    /**
+     * @var array
+     */
+    protected $options;
+
+    public function __construct(string $host, int $port, array $options = [])
     {
         $this->host = $host;
         $this->port = $port;
+        $this->options = $options;
     }
 
     /**
@@ -37,6 +43,12 @@ class Transport implements NetworkTransport\TransportInterface
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_HTTPHEADER, $request->getHeaders());
 
+        if (isset($this->options['timeoutMs'])) {
+            curl_setopt($ch, CURLOPT_TIMEOUT_MS, $this->options['timeoutMs']);
+        } elseif (isset($this->options['timeout'])) {
+            curl_setopt($ch, CURLOPT_TIMEOUT, $this->options['timeout']);
+        }
+
         if ($request->getMethod() === self::METHOD_POST) {
             curl_setopt($ch, CURLOPT_POST, true);
         } elseif ($request->getMethod() === self::METHOD_GET) {
@@ -48,7 +60,13 @@ class Transport implements NetworkTransport\TransportInterface
         }
 
         $result = curl_exec($ch);
+        if ($result === false) {
+            $response = new Result(null, curl_errno($ch), curl_error($ch));
+            curl_close($ch);
+            return $response;
+        }
 
-        // @todo implement me
+        curl_close($ch);
+        return new Result($result);
     }
 }
