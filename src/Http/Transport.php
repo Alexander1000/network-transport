@@ -1,8 +1,8 @@
 <?php declare(strict_types = 1);
 
-namespace NetworkTransport\Transport;
+namespace NetworkTransport\Http;
 
-class Http implements TransportInterface
+class Transport implements \NetworkTransport\TransportInterface
 {
     /**
      * @var string
