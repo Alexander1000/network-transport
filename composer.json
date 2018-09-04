@@ -1,0 +1,25 @@
+{
+  "name": "Alexander1000/network-transport",
+  "description": "network-transport",
+  "authors": [
+    {
+      "name": "Alexander Dankovtsev",
+      "email": "a.dankovtsev@mail.ru"
+    }
+  ],
+  "config": {
+    "secure-http": false
+  },
+  "repositories": [
+    { "packagist": false }
+  ],
+  "minimum-stability": "dev",
+  "require": {
+    "php": ">=7.2"
+  },
+  "autoload": {
+    "psr-4": {
+      "": "src"
+    }
+  }
+}
