@@ -34,6 +34,9 @@ class Transport implements NetworkTransport\TransportInterface
     {
         $ch = curl_init(sprintf('%s:%d%s', $this->host, $this->port, $request->getUri()));
 
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $request->getHeaders());
+
         if ($request->getMethod() === self::METHOD_POST) {
             curl_setopt($ch, CURLOPT_POST, true);
         } elseif ($request->getMethod() === self::METHOD_GET) {
@@ -43,6 +46,8 @@ class Transport implements NetworkTransport\TransportInterface
                 Exception::METHOD_NOT_ALLOWED
             );
         }
+
+        $result = curl_exec($ch);
 
         // @todo implement me
     }

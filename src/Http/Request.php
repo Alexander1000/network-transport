@@ -14,10 +14,16 @@ class Request
      */
     protected $method;
 
-    public function __construct(string $uri, string $method)
+    /**
+     * @var array
+     */
+    protected $headers;
+
+    public function __construct(string $uri, string $method, array $headers)
     {
         $this->uri = $uri;
         $this->method = $method;
+        $this->headers = $headers;
     }
 
     /**
@@ -34,5 +40,13 @@ class Request
     public function getMethod(): string
     {
         return $this->method;
+    }
+
+    /**
+     * @return array
+     */
+    public function getHeaders(): array
+    {
+        return $this->headers;
     }
 }
