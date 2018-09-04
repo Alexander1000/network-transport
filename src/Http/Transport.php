@@ -33,10 +33,10 @@ class Transport implements NetworkTransport\TransportInterface
 
     /**
      * @param Request $request
-     * @return Result
+     * @return Response
      * @throws Exception\MethodNotAllowed
      */
-    public function send(Request $request): Result
+    public function send(Request $request): Response
     {
         $ch = curl_init(sprintf('%s:%d%s', $this->host, $this->port, $request->getUri()));
 
@@ -62,12 +62,12 @@ class Transport implements NetworkTransport\TransportInterface
 
         $result = curl_exec($ch);
         if ($result === false) {
-            $response = new Result(null, curl_errno($ch), curl_error($ch));
+            $response = new Response(null, curl_errno($ch), curl_error($ch));
             curl_close($ch);
             return $response;
         }
 
         curl_close($ch);
-        return new Result($result);
+        return new Response($result);
     }
 }

@@ -2,7 +2,7 @@
 
 namespace NetworkTransport\Http;
 
-class Result
+class Response
 {
     /**
      * @var null|string
