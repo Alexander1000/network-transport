@@ -4,6 +4,9 @@ namespace NetworkTransport\Http;
 
 class Transport implements \NetworkTransport\TransportInterface
 {
+    public const METHOD_GET = 'GET';
+    public const METHOD_POST = 'POST';
+
     /**
      * @var string
      */
@@ -26,6 +29,7 @@ class Transport implements \NetworkTransport\TransportInterface
      */
     public function send(Request $request): Result
     {
+        $ch = curl_init(sprintf('%s:%d%s', $this->host, $this->port, $request->getUri()));
         // @todo implement me
     }
 }
