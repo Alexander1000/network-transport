@@ -25,4 +25,36 @@ class Result
         $this->errorCode = $errorCode;
         $this->errorMsg = $errorMsg;
     }
+
+    /**
+     * @return null|string
+     */
+    public function getResponse(): ?string
+    {
+        return $this->getResponse();
+    }
+
+    /**
+     * @return bool
+     */
+    public function isError(): bool
+    {
+        return $this->errorCode !== null || $this->errorMsg !== null;
+    }
+
+    /**
+     * @return int|null
+     */
+    public function getErrorCode(): ?int
+    {
+        return $this->errorCode;
+    }
+
+    /**
+     * @return null|string
+     */
+    public function getErrorMessage(): ?string
+    {
+        return $this->errorMsg;
+    }
 }
