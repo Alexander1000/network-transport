@@ -43,7 +43,11 @@ class Transport implements NetworkTransport\TransportInterface
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_HTTPHEADER, $request->getHeaders());
 
-        if (isset($this->options['timeoutMs'])) {
+        if ($request->getOption('timeoutMs') !== null) {
+            curl_setopt($ch, CURLOPT_TIMEOUT_MS, $request->getOption('timeoutMs'));
+        } elseif ($request->getOption('timeout') !== null) {
+            curl_setopt($ch, CURLOPT_TIMEOUT, $request->getOption('timeout'));
+        } elseif (isset($this->options['timeoutMs'])) {
             curl_setopt($ch, CURLOPT_TIMEOUT_MS, $this->options['timeoutMs']);
         } elseif (isset($this->options['timeout'])) {
             curl_setopt($ch, CURLOPT_TIMEOUT, $this->options['timeout']);

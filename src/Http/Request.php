@@ -24,11 +24,17 @@ class Request
      */
     protected $data;
 
-    public function __construct(string $uri, string $method, array $headers)
+    /**
+     * @var array
+     */
+    protected $options;
+
+    public function __construct(string $uri, string $method, array $headers, array $options = [])
     {
         $this->uri = $uri;
         $this->method = $method;
         $this->headers = $headers;
+        $this->options = $options;
     }
 
     /**
@@ -81,5 +87,14 @@ class Request
         }
 
         return $this->data;
+    }
+
+    /**
+     * @param string $name
+     * @return mixed|null
+     */
+    public function getOption(string $name)
+    {
+        return $this->options[$name] ?? null;
     }
 }
