@@ -2,7 +2,9 @@
 
 namespace NetworkTransport\Http;
 
-class Transport implements \NetworkTransport\TransportInterface
+use NetworkTransport;
+
+class Transport implements NetworkTransport\TransportInterface
 {
     public const METHOD_GET = 'GET';
     public const METHOD_POST = 'POST';
@@ -26,10 +28,22 @@ class Transport implements \NetworkTransport\TransportInterface
     /**
      * @param Request $request
      * @return Result
+     * @throws Exception\MethodNotAllowed
      */
     public function send(Request $request): Result
     {
         $ch = curl_init(sprintf('%s:%d%s', $this->host, $this->port, $request->getUri()));
+
+        if ($request->getMethod() === self::METHOD_POST) {
+            curl_setopt($ch, CURLOPT_POST, true);
+        } elseif ($request->getMethod() === self::METHOD_GET) {
+        } else {
+            throw new Exception\MethodNotAllowed(
+                sprintf('Method "%s" not allowed', $request->getMethod()),
+                Exception::METHOD_NOT_ALLOWED
+            );
+        }
+
         // @todo implement me
     }
 }
