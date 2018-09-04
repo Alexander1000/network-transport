@@ -19,4 +19,13 @@ class Transport implements \NetworkTransport\TransportInterface
         $this->host = $host;
         $this->port = $port;
     }
+
+    /**
+     * @param Request $request
+     * @return Result
+     */
+    public function send(Request $request): Result
+    {
+        // @todo implement me
+    }
 }

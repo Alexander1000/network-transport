@@ -2,9 +2,6 @@
 
 namespace NetworkTransport\Http;
 
-class Request
+class Result
 {
-    public function __construct()
-    {
-    }
 }
