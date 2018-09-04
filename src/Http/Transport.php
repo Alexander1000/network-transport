@@ -51,6 +51,7 @@ class Transport implements NetworkTransport\TransportInterface
 
         if ($request->getMethod() === self::METHOD_POST) {
             curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $request->serialize());
         } elseif ($request->getMethod() === self::METHOD_GET) {
         } else {
             throw new Exception\MethodNotAllowed(

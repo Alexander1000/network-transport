@@ -19,11 +19,26 @@ class Request
      */
     protected $headers;
 
+    /**
+     * @var mixed
+     */
+    protected $data;
+
     public function __construct(string $uri, string $method, array $headers)
     {
         $this->uri = $uri;
         $this->method = $method;
         $this->headers = $headers;
+    }
+
+    /**
+     * @param mixed $data
+     * @return $this
+     */
+    public function setData($data)
+    {
+        $this->data = $data;
+        return $this;
     }
 
     /**
@@ -47,6 +62,24 @@ class Request
      */
     public function getHeaders(): array
     {
-        return $this->headers;
+        $headers = [];
+        foreach ($this->headers as $header => $headerContent) {
+            $headers[] = sprintf('%s: %s', $header, $headerContent);
+        }
+        return $headers;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function serialize()
+    {
+        if (isset($this->headers['Content-Type'])) {
+            if ($this->headers['Content-Type'] == 'application/json') {
+                return json_encode($this->data);
+            }
+        }
+
+        return $this->data;
     }
 }
