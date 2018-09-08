@@ -76,6 +76,26 @@ class Request
     }
 
     /**
+     * @param string $header
+     * @param string $value
+     * @return $this
+     */
+    public function setHeader(string $header, string $value)
+    {
+        $this->headers[$header] = $value;
+        return $this;
+    }
+
+    /**
+     * @param string $header
+     * @return bool
+     */
+    public function hasHeader(string $header): bool
+    {
+        return isset($this->headers[$header]);
+    }
+
+    /**
      * @return mixed
      */
     public function serialize()

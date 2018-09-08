@@ -9,25 +9,27 @@ class Transport
     public const METHOD_GET = 'GET';
     public const METHOD_POST = 'POST';
 
+    public const HEADER_CONTENT_TYPE = 'Content-Type';
+
     /**
      * @var string
      */
     protected $host;
 
     /**
-     * @var int
+     * @var array
      */
-    protected $port;
+    protected $headers;
 
     /**
      * @var array
      */
     protected $options;
 
-    public function __construct(string $host, int $port, array $options = [])
+    public function __construct(string $host, array $headers = [], array $options = [])
     {
         $this->host = $host;
-        $this->port = $port;
+        $this->headers = $headers;
         $this->options = $options;
     }
 
@@ -38,10 +40,18 @@ class Transport
      */
     public function send(Request $request): Response
     {
-        $ch = curl_init(sprintf('%s:%d%s', $this->host, $this->port, $request->getUri()));
+        $ch = curl_init(sprintf('%s%s', $this->host, $request->getUri()));
 
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, $request->getHeaders());
+        curl_setopt(
+            $ch,
+            CURLOPT_HTTPHEADER,
+            array_merge($this->getHeaders(), $request->getHeaders())
+        );
+
+        if (!$request->hasHeader(self::HEADER_CONTENT_TYPE) && isset($this->headers[self::HEADER_CONTENT_TYPE])) {
+            $request->setHeader(self::HEADER_CONTENT_TYPE, $this->headers[self::HEADER_CONTENT_TYPE]);
+        }
 
         if ($request->getOption('timeoutMs') !== null) {
             curl_setopt($ch, CURLOPT_TIMEOUT_MS, $request->getOption('timeoutMs'));
@@ -73,5 +83,17 @@ class Transport
 
         curl_close($ch);
         return new Response($result);
+    }
+
+    /**
+     * @return string[]
+     */
+    private function getHeaders(): array
+    {
+        $headers = [];
+        foreach ($this->headers as $header => $headerContent) {
+            $headers[] = sprintf('%s: %s', $header, $headerContent);
+        }
+        return $headers;
     }
 }
