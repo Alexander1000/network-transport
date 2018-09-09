@@ -29,7 +29,7 @@ class Request
      */
     protected $options;
 
-    public function __construct(string $uri, string $method, array $headers, array $options = [])
+    public function __construct(string $uri, string $method, array $headers = [], array $options = [])
     {
         $this->uri = $uri;
         $this->method = $method;
