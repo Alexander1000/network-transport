@@ -27,10 +27,18 @@ class Transport
     }
 
     /**
-     * @param Request $request
+     * @param RequestInterface $request
+     * @return bool
      */
-    public function send(Request $request)
+    public function send(RequestInterface $request): bool
     {
-        $socket = fsockopen($this->host, $this->port, $errno, $errstr);
+        $socket = @fsockopen('udp://' . $this->host, $this->port, $errno, $errstr);
+        if (!$socket) {
+            var_dump($errno, $errstr);
+            return false;
+        }
+        
+        $result = fwrite($socket, $request->serialize());
+        return $result !== false;
     }
 }
