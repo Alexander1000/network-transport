@@ -29,16 +29,20 @@ class Transport
     /**
      * @param RequestInterface $request
      * @return bool
+     * @throws Exception
      */
     public function send(RequestInterface $request): bool
     {
-        $socket = @fsockopen('udp://' . $this->host, $this->port, $errno, $errstr);
+        $timeout = $this->options['timeout'] ?? null;
+        $socket = @fsockopen('udp://' . $this->host, $this->port, $errno, $errstr, $timeout);
         if (!$socket) {
-            var_dump($errno, $errstr);
+            if (!empty($this->options['strict'])) {
+                throw new Exception($errstr, $errno);
+            }
             return false;
         }
         
-        $result = fwrite($socket, $request->serialize());
+        $result = @fwrite($socket, $request->serialize());
         return $result !== false;
     }
 }
