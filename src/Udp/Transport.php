@@ -14,9 +14,23 @@ class Transport
      */
     protected $port;
 
-    public function __construct(string $host, int $port)
+    /**
+     * @var array
+     */
+    protected $options;
+
+    public function __construct(string $host, int $port, array $options = [])
     {
         $this->host = $host;
         $this->port = $port;
+        $this->options = $options;
+    }
+
+    /**
+     * @param Request $request
+     */
+    public function send(Request $request)
+    {
+        $socket = fsockopen($this->host, $this->port, $errno, $errstr);
     }
 }
