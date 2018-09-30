@@ -31,7 +31,7 @@ class Response
      */
     public function getResponse(): ?string
     {
-        return $this->getResponse();
+        return $this->response;
     }
 
     /**
