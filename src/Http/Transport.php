@@ -6,21 +6,24 @@ use NetworkTransport;
 
 class Transport implements TransportInterface
 {
+    private $multiCurlResource;
+
     /**
-     * @param resource $request
+     * @param Request $request
      * @return Response
      * @throws Exception\MethodNotAllowed
      */
-    public function send(resource $request): Response
+    public function send(Request $request): Response
     {
-        $result = curl_exec($request);
+        $ch = $request->getResource();
+        $result = curl_exec($ch);
         if ($result === false) {
-            $response = new Response(null, curl_errno($request), curl_error($request));
-            curl_close($request);
+            $response = new Response(null, curl_errno($ch), curl_error($ch));
+            curl_close($ch);
             return $response;
         }
 
-        curl_close($request);
+        curl_close($ch);
         return new Response($result);
     }
 }
