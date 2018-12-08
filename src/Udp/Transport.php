@@ -2,7 +2,7 @@
 
 namespace NetworkTransport\Udp;
 
-class Transport
+class Transport implements TransportInterface
 {
     /**
      * @var string

@@ -4,7 +4,7 @@ namespace NetworkTransport\Http;
 
 use NetworkTransport;
 
-class Transport
+class Transport implements TransportInterface
 {
     public const METHOD_GET = 'GET';
     public const METHOD_POST = 'POST';
