@@ -1,8 +1,8 @@
 <?php declare(strict_types = 1);
 
-namespace NetworkTransport\Http;
+namespace NetworkTransport\Http\Request;
 
-class Request
+class Data
 {
     /**
      * @var string

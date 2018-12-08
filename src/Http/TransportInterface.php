@@ -5,9 +5,9 @@ namespace NetworkTransport\Http;
 interface TransportInterface
 {
     /**
-     * @param Request $request
+     * @param resource $request
      * @return Response
      * @throws Exception\MethodNotAllowed
      */
-    public function send(Request $request): Response;
+    public function send(resource $request): Response;
 }
