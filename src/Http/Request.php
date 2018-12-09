@@ -23,7 +23,7 @@ class Request
     /**
      * @return resource
      */
-    public function getResource(): resource
+    public function getResource()
     {
         return $this->resource;
     }

@@ -36,7 +36,7 @@ class Builder
      * @return resource
      * @throws \NetworkTransport\Http\Exception\MethodNotAllowed
      */
-    public function build(Data $data): resource
+    public function build(Data $data)
     {
         $ch = curl_init(sprintf('%s%s', $this->host, $data->getUri()));
 
