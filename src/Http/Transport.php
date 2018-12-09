@@ -42,6 +42,26 @@ class Transport implements TransportInterface
      */
     public function send(Request $request): Response
     {
+        $taskId = $this->getTaskId($request);
+        if ($taskId === null) {
+            // не было задач в multi_curl
+            $ch = $request->getResource();
+            $result = curl_exec($ch);
+            if ($result === false) {
+                $response = new Response(null, curl_errno($ch), curl_error($ch));
+                curl_close($ch);
+                return $response;
+            }
+
+            curl_close($ch);
+            return new Response($result);
+        }
+
+        if ($taskId !== $this->parallelTaskId) {
+            // запросили уже отработанную задачу
+            return $this->responseCollector[$taskId][$request->getHash()];
+        }
+
         $active = null;
         $mh = $this->multiCurlResource[$this->parallelTaskId];
         do {
@@ -75,5 +95,17 @@ class Transport implements TransportInterface
 
         curl_close($ch);
         return new Response($result);
+    }
+
+    private function getTaskId(Request $request): ?int
+    {
+        foreach ($this->requestCollector as $taskId => $requestCollection) {
+            if (isset($requestCollection[$request->getHash()])) {
+                return $taskId;
+                break;
+            }
+        }
+        
+        return null;
     }
 }
