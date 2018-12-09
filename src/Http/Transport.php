@@ -43,6 +43,7 @@ class Transport implements TransportInterface
     public function send(Request $request): Response
     {
         $taskId = $this->getTaskId($request);
+        var_dump($taskId);
         if ($taskId === null) {
             // не было задач в multi_curl
             $ch = $request->getResource();
@@ -69,11 +70,14 @@ class Transport implements TransportInterface
         } while($mrc == CURLM_CALL_MULTI_PERFORM);
 
         while ($active && $mrc == CURLM_OK) {
-            if (curl_multi_select($mh) != -1) {
-                do {
-                    $mrc = curl_multi_exec($mh, $active);
-                } while ($mrc == CURLM_CALL_MULTI_PERFORM);
+            // Wait for activity on any curl-connection
+            if (curl_multi_select($mh) == -1) {
+                usleep(1);
             }
+
+            do {
+                $mrc = curl_multi_exec($mh, $active);
+            } while ($mrc == CURLM_CALL_MULTI_PERFORM);
         }
 
         $response = null;
