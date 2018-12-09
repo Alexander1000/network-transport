@@ -85,16 +85,15 @@ class Transport implements TransportInterface
         foreach ($this->requestCollector[$taskId] as $hash => $tRequest) {
             /** @var Request $tRequest */
             $result = curl_multi_getcontent($tRequest->getResource());
-            $errno = curl_errno($tRequest->getResource());
-            if ($errno) {
-                $this->responseCollector[$this->parallelTaskId][$hash] = new Response(null, $errno, curl_error($request->getResource()));
+            if ($errno = curl_errno($tRequest->getResource())) {
+                $this->responseCollector[$taskId][$hash] = new Response(null, $errno, curl_error($request->getResource()));
             } else {
-                $this->responseCollector[$this->parallelTaskId][$hash] = new Response($result);
+                $this->responseCollector[$taskId][$hash] = new Response($result);
             }
             curl_multi_remove_handle($mh, $tRequest->getResource());
 
             if ($hash == $request->getHash()) {
-                $response = $this->responseCollector[$this->parallelTaskId][$hash];
+                $response = $this->responseCollector[$taskId][$hash];
             }
         }
 
