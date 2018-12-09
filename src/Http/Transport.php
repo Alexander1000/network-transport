@@ -63,7 +63,7 @@ class Transport implements TransportInterface
         }
 
         $active = null;
-        $mh = $this->multiCurlResource[$this->parallelTaskId];
+        $mh = $this->multiCurlResource[$taskId];
         do {
             $mrc = curl_multi_exec($mh, $active);
         } while($mrc == CURLM_CALL_MULTI_PERFORM);
@@ -76,25 +76,28 @@ class Transport implements TransportInterface
             }
         }
 
-        foreach ($this->requestCollector[$this->parallelTaskId] as $hash => $tRequest) {
+        $response = null;
+
+        foreach ($this->requestCollector[$taskId] as $hash => $tRequest) {
             /** @var Request $tRequest */
-            $this->responseCollector[$this->parallelTaskId][$hash] = curl_multi_getcontent($tRequest->getResource());
+            $result = curl_multi_getcontent($tRequest->getResource());
+            $errno = curl_errno($tRequest->getResource());
+            if ($errno) {
+                $this->responseCollector[$this->parallelTaskId][$hash] = new Response(null, $errno, curl_error($request->getResource()));
+            } else {
+                $this->responseCollector[$this->parallelTaskId][$hash] = new Response($result);
+            }
             curl_multi_remove_handle($mh, $tRequest->getResource());
+
+            if ($hash == $request->getHash()) {
+                $response = $this->responseCollector[$this->parallelTaskId][$hash];
+            }
         }
 
         curl_multi_close($mh);
         $this->parallelTaskId++;
 
-        $ch = $request->getResource();
-        $result = curl_exec($ch);
-        if ($result === false) {
-            $response = new Response(null, curl_errno($ch), curl_error($ch));
-            curl_close($ch);
-            return $response;
-        }
-
-        curl_close($ch);
-        return new Response($result);
+        return $response;
     }
 
     private function getTaskId(Request $request): ?int
@@ -102,7 +105,6 @@ class Transport implements TransportInterface
         foreach ($this->requestCollector as $taskId => $requestCollection) {
             if (isset($requestCollection[$request->getHash()])) {
                 return $taskId;
-                break;
             }
         }
         
