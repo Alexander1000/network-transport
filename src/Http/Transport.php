@@ -43,7 +43,6 @@ class Transport implements TransportInterface
     public function send(Request $request): Response
     {
         $taskId = $this->getTaskId($request);
-        var_dump($taskId);
         if ($taskId === null) {
             // не было задач в multi_curl
             $ch = $request->getResource();
