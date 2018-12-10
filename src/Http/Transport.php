@@ -16,8 +16,16 @@ class Transport implements TransportInterface
      */
     private $multiCurlResource = [];
 
+    /**
+     * requests by parallel task id and hash
+     * @var array
+     */
     private $requestCollector = [];
 
+    /**
+     * responses by parallel task id and hash
+     * @var array
+     */
     private $responseCollector = [];
 
     /**
@@ -59,7 +67,9 @@ class Transport implements TransportInterface
 
         if ($taskId !== $this->parallelTaskId) {
             // запросили уже отработанную задачу
-            return $this->responseCollector[$taskId][$request->getHash()];
+            $response = $this->responseCollector[$taskId][$request->getHash()];
+            unset($this->responseCollector[$taskId][$request->getHash()]);
+            return $response;
         }
 
         $active = null;
@@ -102,6 +112,10 @@ class Transport implements TransportInterface
         return $response;
     }
 
+    /**
+     * @param Request $request
+     * @return int|null
+     */
     private function getTaskId(Request $request): ?int
     {
         foreach ($this->requestCollector as $taskId => $requestCollection) {
