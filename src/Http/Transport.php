@@ -123,7 +123,7 @@ class Transport implements TransportInterface
                 return $taskId;
             }
         }
-        
+
         return null;
     }
 }
