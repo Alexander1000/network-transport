@@ -6,31 +6,41 @@ use NetworkTransport;
 
 class Transport implements TransportInterface
 {
-    public const METHOD_GET = 'GET';
-    public const METHOD_POST = 'POST';
-
-    public const HEADER_CONTENT_TYPE = 'Content-Type';
-
     /**
-     * @var string
+     * @var int
      */
-    protected $host;
+    private $parallelTaskId = 0;
 
     /**
+     * @var resource[]
+     */
+    private $multiCurlResource = [];
+
+    /**
+     * requests by parallel task id and hash
      * @var array
      */
-    protected $headers;
+    private $requestCollector = [];
 
     /**
+     * responses by parallel task id and hash
      * @var array
      */
-    protected $options;
+    private $responseCollector = [];
 
-    public function __construct(string $host, array $headers = [], array $options = [])
+    /**
+     * @param Request $request
+     * @return $this
+     */
+    public function add(Request $request)
     {
-        $this->host = $host;
-        $this->headers = $headers;
-        $this->options = $options;
+        if (empty($this->multiCurlResource[$this->parallelTaskId])) {
+            $this->multiCurlResource[$this->parallelTaskId] = curl_multi_init();
+        }
+
+        curl_multi_add_handle($this->multiCurlResource[$this->parallelTaskId], $request->getResource());
+        $this->requestCollector[$this->parallelTaskId][$request->getHash()] = $request;
+        return $this;
     }
 
     /**
@@ -40,60 +50,80 @@ class Transport implements TransportInterface
      */
     public function send(Request $request): Response
     {
-        $ch = curl_init(sprintf('%s%s', $this->host, $request->getUri()));
+        $taskId = $this->getTaskId($request);
+        if ($taskId === null) {
+            // не было задач в multi_curl
+            $ch = $request->getResource();
+            $result = curl_exec($ch);
+            if ($result === false) {
+                $response = new Response(null, curl_errno($ch), curl_error($ch));
+                curl_close($ch);
+                return $response;
+            }
 
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt(
-            $ch,
-            CURLOPT_HTTPHEADER,
-            array_merge($this->getHeaders(), $request->getHeaders())
-        );
-
-        if (!$request->hasHeader(self::HEADER_CONTENT_TYPE) && isset($this->headers[self::HEADER_CONTENT_TYPE])) {
-            $request->setHeader(self::HEADER_CONTENT_TYPE, $this->headers[self::HEADER_CONTENT_TYPE]);
-        }
-
-        if ($request->getOption('timeoutMs') !== null) {
-            curl_setopt($ch, CURLOPT_TIMEOUT_MS, $request->getOption('timeoutMs'));
-        } elseif ($request->getOption('timeout') !== null) {
-            curl_setopt($ch, CURLOPT_TIMEOUT, $request->getOption('timeout'));
-        } elseif (isset($this->options['timeoutMs'])) {
-            curl_setopt($ch, CURLOPT_TIMEOUT_MS, $this->options['timeoutMs']);
-        } elseif (isset($this->options['timeout'])) {
-            curl_setopt($ch, CURLOPT_TIMEOUT, $this->options['timeout']);
-        }
-
-        if ($request->getMethod() === self::METHOD_POST) {
-            curl_setopt($ch, CURLOPT_POST, true);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, $request->serialize());
-        } elseif ($request->getMethod() === self::METHOD_GET) {
-        } else {
-            throw new Exception\MethodNotAllowed(
-                sprintf('Method "%s" not allowed', $request->getMethod()),
-                Exception::METHOD_NOT_ALLOWED
-            );
-        }
-
-        $result = curl_exec($ch);
-        if ($result === false) {
-            $response = new Response(null, curl_errno($ch), curl_error($ch));
             curl_close($ch);
+            return new Response($result);
+        }
+
+        if ($taskId !== $this->parallelTaskId) {
+            // запросили уже отработанную задачу
+            $response = $this->responseCollector[$taskId][$request->getHash()];
+            unset($this->responseCollector[$taskId][$request->getHash()]);
             return $response;
         }
 
-        curl_close($ch);
-        return new Response($result);
+        $active = null;
+        $mh = $this->multiCurlResource[$taskId];
+        do {
+            $mrc = curl_multi_exec($mh, $active);
+        } while($mrc == CURLM_CALL_MULTI_PERFORM);
+
+        while ($active && $mrc == CURLM_OK) {
+            // Wait for activity on any curl-connection
+            if (curl_multi_select($mh) == -1) {
+                usleep(1);
+            }
+
+            do {
+                $mrc = curl_multi_exec($mh, $active);
+            } while ($mrc == CURLM_CALL_MULTI_PERFORM);
+        }
+
+        $response = null;
+
+        foreach ($this->requestCollector[$taskId] as $hash => $tRequest) {
+            /** @var Request $tRequest */
+            $result = curl_multi_getcontent($tRequest->getResource());
+            if ($errno = curl_errno($tRequest->getResource())) {
+                $this->responseCollector[$taskId][$hash] = new Response(null, $errno, curl_error($request->getResource()));
+            } else {
+                $this->responseCollector[$taskId][$hash] = new Response($result);
+            }
+            curl_multi_remove_handle($mh, $tRequest->getResource());
+
+            if ($hash == $request->getHash()) {
+                $response = $this->responseCollector[$taskId][$hash];
+            }
+        }
+
+        curl_multi_close($mh);
+        $this->parallelTaskId++;
+
+        return $response;
     }
 
     /**
-     * @return string[]
+     * @param Request $request
+     * @return int|null
      */
-    private function getHeaders(): array
+    private function getTaskId(Request $request): ?int
     {
-        $headers = [];
-        foreach ($this->headers as $header => $headerContent) {
-            $headers[] = sprintf('%s: %s', $header, $headerContent);
+        foreach ($this->requestCollector as $taskId => $requestCollection) {
+            if (isset($requestCollection[$request->getHash()])) {
+                return $taskId;
+            }
         }
-        return $headers;
+
+        return null;
     }
 }

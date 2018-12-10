@@ -5,116 +5,34 @@ namespace NetworkTransport\Http;
 class Request
 {
     /**
-     * @var string
+     * @var resource
      */
-    protected $uri;
+    private $resource;
 
     /**
      * @var string
      */
-    protected $method;
+    private $hash;
 
-    /**
-     * @var array
-     */
-    protected $headers;
-
-    /**
-     * @var mixed
-     */
-    protected $data;
-
-    /**
-     * @var array
-     */
-    protected $options;
-
-    public function __construct(string $uri, string $method, array $headers = [], array $options = [])
+    public function __construct(Request\Builder $builder, Request\Data $data)
     {
-        $this->uri = $uri;
-        $this->method = $method;
-        $this->headers = $headers;
-        $this->options = $options;
+        $this->resource = $builder->build($data);
+        $this->hash = spl_object_hash($data);
     }
 
     /**
-     * @param mixed $data
-     * @return $this
+     * @return resource
      */
-    public function setData($data)
+    public function getResource()
     {
-        $this->data = $data;
-        return $this;
+        return $this->resource;
     }
 
     /**
      * @return string
      */
-    public function getUri(): string
+    public function getHash(): string
     {
-        return $this->uri;
-    }
-
-    /**
-     * @return string
-     */
-    public function getMethod(): string
-    {
-        return $this->method;
-    }
-
-    /**
-     * @return array
-     */
-    public function getHeaders(): array
-    {
-        $headers = [];
-        foreach ($this->headers as $header => $headerContent) {
-            $headers[] = sprintf('%s: %s', $header, $headerContent);
-        }
-        return $headers;
-    }
-
-    /**
-     * @param string $header
-     * @param string $value
-     * @return $this
-     */
-    public function setHeader(string $header, string $value)
-    {
-        $this->headers[$header] = $value;
-        return $this;
-    }
-
-    /**
-     * @param string $header
-     * @return bool
-     */
-    public function hasHeader(string $header): bool
-    {
-        return isset($this->headers[$header]);
-    }
-
-    /**
-     * @return mixed
-     */
-    public function serialize()
-    {
-        if (isset($this->headers['Content-Type'])) {
-            if ($this->headers['Content-Type'] == 'application/json') {
-                return json_encode($this->data);
-            }
-        }
-
-        return $this->data;
-    }
-
-    /**
-     * @param string $name
-     * @return mixed|null
-     */
-    public function getOption(string $name)
-    {
-        return $this->options[$name] ?? null;
+        return $this->hash;
     }
 }
